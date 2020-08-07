@@ -7,6 +7,8 @@
 
 #include "AliAnalysisTaskSE.h"
 
+class AliPIDResponse;
+
 class AliAnalysisTaskMyTask : public AliAnalysisTaskSE  
 {
     public:
@@ -22,7 +24,12 @@ class AliAnalysisTaskMyTask : public AliAnalysisTaskSE
         AliAODEvent*            fAOD;           //! input event
         TList*                  fOutputList;    //! output list
         TH1F*                   fHistPt;        //! dummy histogram
-        TH1F*			 fHistPtV;	  //! new histogram
+        TH1F*			 fHistPtV;	  //! nuevo histograma con vertices
+        TH1F*			 fHistPt1;       //! filterbit 1
+        TH1F*			 fHistPt128;	  //! filterbit 128
+        TH1F*			 fHistPt512;	  //! filterbit 512
+        TH1F*			 fYour2DHistogram; //! histograma 2d
+        AliPIDResponse*	 fPIDResponse; //! pid response object
 
         AliAnalysisTaskMyTask(const AliAnalysisTaskMyTask&); // not implemented
         AliAnalysisTaskMyTask& operator=(const AliAnalysisTaskMyTask&); // not implemented

@@ -18,7 +18,7 @@
  * empty task which can serve as a starting point for building an analysis
  * as an example, one histogram is filled
  */
-
+#include "AliPIDResponse.h"
 #include "TChain.h"
 #include "TH1F.h"
 #include "TList.h"
@@ -28,6 +28,7 @@
 #include "AliAODInputHandler.h"
 #include "AliAnalysisTaskMyTask.h"
 
+class AliPIDResponse;
 class AliAnalysisTaskMyTask;    // your analysis class
 
 using namespace std;            // std namespace: so you can do things like 'cout'
@@ -35,14 +36,14 @@ using namespace std;            // std namespace: so you can do things like 'cou
 ClassImp(AliAnalysisTaskMyTask) // classimp: necessary for root
 
 AliAnalysisTaskMyTask::AliAnalysisTaskMyTask() : AliAnalysisTaskSE(), 
-    fAOD(0), fOutputList(0), fHistPt(0), fHistPtV(0)
+    fAOD(0), fOutputList(0), fHistPt(0), fHistPtV(0), fHistPt1(0), fHistPt128(0), fHistPt512(0), fYour2DHistogram(0), fPIDResponse(0)
 {
     // default constructor, don't allocate memory here!
     // this is used by root for IO purposes, it needs to remain empty
 }
 //_____________________________________________________________________________
 AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char* name) : AliAnalysisTaskSE(name),
-    fAOD(0), fOutputList(0), fHistPt(0), fHistPtV(0)
+    fAOD(0), fOutputList(0), fHistPt(0), fHistPtV(0), fHistPt1(0), fHistPt128(0), fHistPt512(0), fYour2DHistogram(0), fPIDResponse(0)
 {
     // constructor
     DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
@@ -84,13 +85,38 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects()
     PostData(1, fOutputList);           // postdata will notify the analysis manager of changes / updates to the 
                                         // fOutputList object. the manager will in the end take care of writing your output to file
                                         // so it needs to know what's in the output
-    fHistPtV = new TH1F("fHistPtV", "fHistPtV", 100, 0, 10);
+                                        
+                                        
+    fHistPtV = new TH1F("fHistPtV", "fHistPtV", 100, 0, 10);     		 //histograma vertices
     fOutputList->Add(fHistPtV);
     PostData(1, fOutputList);
+    
+    fHistPt1 = new TH1F("fHistPt1", "fHistPt1", 100, 0, 10);		//histograma filterbit 1
+    fOutputList->Add(fHistPt1);
+    PostData(1, fOutputList);
+    
+    fHistPt128 = new TH1F("fHistPt128", "fHistPt128", 100, 0, 10);		//histograma filterbit 128
+    fOutputList->Add(fHistPt128);
+    PostData(1, fOutputList);
+    
+    fHistPt512 = new TH1F("fHistPt512", "fHistPt512", 100, 0, 10);		//histograma filterbit 512
+    fOutputList->Add(fHistPt512);
+    PostData(1, fOutputList);
+    
+    fYour2DHistogram = new TH1F("fYour2DHistogram", "fYour2DHistogram", 100, 0, 10);		//histograma 2d
+    fOutputList->Add(fYour2DHistogram);
+    PostData(1, fOutputList);
+    
+    fPIDResponse = new AliPIDResponse();		//response object
+    fOutputList->Add(fPIDResponse);
+    PostData(1, fOutputList);
+    
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskMyTask::UserExec(Option_t *)
 {
+ 
+ 
     // user exec
     // this function is called once for each event
     // the manager will take care of reading the events from file, and with the static function InputEvent() you 
@@ -115,18 +141,73 @@ void AliAnalysisTaskMyTask::UserExec(Option_t *)
                                                         // the output manager which will take care of writing
                                                         // it to a file
     
-    fAOD = dynamic_cast<AliAODEvent*>(InputEvent());
-    float vertexZ = fAOD->GetPrimaryVertex()->GetZ();
-    if(!fAOD) return;
+    fAOD = dynamic_cast<AliAODEvent*>(InputEvent());				//histograma vertices
+    if(!fAOD) return;									
     Int_t jTracks(fAOD->GetNumberOfTracks());
     for(Int_t j(0); j < jTracks; j++) {
     	AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(j));
-    	if(!track || !track->TestFilterBit(1)) continue;
+    	if(!track || !track->TestFilterBit(1)) 
+    	continue;
+    	float vertexZ = fAOD->GetPrimaryVertex()->GetZ();
     	fHistPtV->Fill(track->Pt());
     }
     PostData(1, fOutputList);
     
+    fAOD = dynamic_cast<AliAODEvent*>(InputEvent());					//histograma filterbit 1	
+    if(!fAOD) return;									
+    Int_t kTracks(fAOD->GetNumberOfTracks());
+    for(Int_t k(0); k < kTracks; k++) {
+    	AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(k));
+    	if(!track || !track->TestFilterBit(1)) continue;
+    	fHistPt1->Fill(track->Pt()); 
+    }
+    PostData(1, fOutputList);
     
+    fAOD = dynamic_cast<AliAODEvent*>(InputEvent());					//histograma filterbit 128	
+    if(!fAOD) return;									
+    Int_t mTracks(fAOD->GetNumberOfTracks());
+    for(Int_t m(0); m < mTracks; m++) {
+    	AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(m));
+    	if(!track || !track->TestFilterBit(128)) continue;
+    	fHistPt128->Fill(track->Pt());
+    }
+    PostData(1, fOutputList);
+    
+    fAOD = dynamic_cast<AliAODEvent*>(InputEvent());					//histograma filterbit 512	
+    if(!fAOD) return;									
+    Int_t nTracks(fAOD->GetNumberOfTracks());
+    for(Int_t n(0); n < nTracks; n++) {
+    	AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(n));
+    	if(!track || !track->TestFilterBit(512)) continue;
+    	fHistPt512->Fill(track->Pt());
+    }
+    PostData(1, fOutputList);
+    
+    fAOD = dynamic_cast<AliAODEvent*>(InputEvent());					//histograma 2d	
+    if(!fAOD) return;									
+    Int_t qTracks(fAOD->GetNumberOfTracks());
+    for(Int_t q(0); q < qTracks; q++) {
+    	AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(q));
+    	if(!track || !track->TestFilterBit(1)) continue;
+    	fYour2DHistogram->Fill(track->P(), track->GetTPCsignal());
+    double kaonSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
+    double pionSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
+    double protonSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
+    if (std::abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion)) < 3 ) {
+   //jippy, i'm a pion
+    };
+    Float_t centrality(0);
+    AliMultSelection *multSelection =static_cast<AliMultSelection*>(fAOD->FindListObject("MultSelection"));
+    if(multSelection) centrality = multSelection->GetMultiplicityPercentile("V0M");
+    PostData(1, fOutputList);
+    };
+
+AliAnalysisManager *man = AliAnalysisManager::GetAnalysisManager();
+    if (man) {
+    	AliInputEventHandler* inputHandler = (AliInputEventHandler*)(man->GetInputEventHandler());
+    	if (inputHandler)   fPIDResponse = inputHandler->GetPIDResponse();
+    }
+
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskMyTask::Terminate(Option_t *)
