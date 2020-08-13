@@ -32,9 +32,9 @@ void runAnalysis()
     // from root6, or the interpreter of root5
     // load the macro and add the task
     
-TMacro PIDadd(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"));
+TMacro PIDadd(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C")); 	//agregamos el pid response
 AliAnalysisTaskPIDResponse* PIDresponseTask = reinterpret_cast<AliAnalysisTaskPIDResponse*>(PIDadd.Exec());
-TMacro multSelection(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"));
+TMacro multSelection(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"));	//macro de centralidad
 AliMultSelectionTask* multSelectionTask = reinterpret_cast<AliMultSelectionTask*>(multSelection.Exec());
 #if !defined (__CINT__) || defined (__CLING__)
     gInterpreter->LoadMacro("AliAnalysisTaskMyTask.cxx++g");
@@ -55,7 +55,7 @@ AliMultSelectionTask* multSelectionTask = reinterpret_cast<AliMultSelectionTask*
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
         // add a few files to the chain (change this so that your local files are added)
-        chain->Add("AliAOD.root");
+        chain->Add("AliAOD_MC.root"); // cambiamos el nombre del archivo
         // start the analysis locally, reading the events from the tchain
         mgr->StartAnalysis("local", chain);
     } else {
@@ -73,7 +73,7 @@ AliMultSelectionTask* multSelectionTask = reinterpret_cast<AliMultSelectionTask*
         alienHandler->SetAPIVersion("V1.1x");
         // select the input data
         alienHandler->SetGridDataDir("/alice/data/2015/LHC15o");
-        alienHandler->SetDataPattern("*pass1/AOD194/*AOD.root");
+        alienHandler->SetDataPattern("*pass1/AOD194/*AliAOD_MC.root");  //cambiamos el nombre del archivo
         // MC has no prefix, data has prefix 000
         alienHandler->SetRunPrefix("000");
         // runnumber

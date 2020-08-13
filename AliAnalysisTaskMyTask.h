@@ -7,7 +7,7 @@
 
 #include "AliAnalysisTaskSE.h"
 
-class AliPIDResponse;
+class AliPIDResponse;		// agregamos la nueva clase
 
 class AliAnalysisTaskMyTask : public AliAnalysisTaskSE  
 {
@@ -19,6 +19,7 @@ class AliAnalysisTaskMyTask : public AliAnalysisTaskSE
         virtual void            UserCreateOutputObjects();
         virtual void            UserExec(Option_t* option);
         virtual void            Terminate(Option_t* option);
+        virtual void            ProcessMCParticles();		//para los datos MC
 
     private:
         AliAODEvent*            fAOD;           //! input event
@@ -30,6 +31,7 @@ class AliAnalysisTaskMyTask : public AliAnalysisTaskSE
         TH1F*			 fHistPt512;	  //! filterbit 512
         TH1F*			 fYour2DHistogram; //! histograma 2d
         AliPIDResponse*	 fPIDResponse; //! pid response object
+        AliMCEvent*             fMCEvent;       //! corresponding MC event
 
         AliAnalysisTaskMyTask(const AliAnalysisTaskMyTask&); // not implemented
         AliAnalysisTaskMyTask& operator=(const AliAnalysisTaskMyTask&); // not implemented

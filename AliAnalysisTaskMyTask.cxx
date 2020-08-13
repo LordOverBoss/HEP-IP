@@ -18,7 +18,7 @@
  * empty task which can serve as a starting point for building an analysis
  * as an example, one histogram is filled
  */
-#include "AliPIDResponse.h"
+
 #include "TChain.h"
 #include "TH1F.h"
 #include "TList.h"
@@ -27,8 +27,12 @@
 #include "AliAODEvent.h"
 #include "AliAODInputHandler.h"
 #include "AliAnalysisTaskMyTask.h"
+#include "AliPIDResponse.h" //pid responde
+#include "AliMCEvent.h"	//para MC
+#include "AliAODMCParticle.h"	//para MC
+#include "AliMultSelection.h"	//para centralidad
 
-class AliPIDResponse;
+class AliPIDResponse;		//cargamos la clase de PID
 class AliAnalysisTaskMyTask;    // your analysis class
 
 using namespace std;            // std namespace: so you can do things like 'cout'
@@ -36,14 +40,14 @@ using namespace std;            // std namespace: so you can do things like 'cou
 ClassImp(AliAnalysisTaskMyTask) // classimp: necessary for root
 
 AliAnalysisTaskMyTask::AliAnalysisTaskMyTask() : AliAnalysisTaskSE(), 
-    fAOD(0), fOutputList(0), fHistPt(0), fHistPtV(0), fHistPt1(0), fHistPt128(0), fHistPt512(0), fYour2DHistogram(0), fPIDResponse(0)
+    fAOD(0), fOutputList(0), fHistPt(0), fHistPtV(0), fHistPt1(0), fHistPt128(0), fHistPt512(0), fYour2DHistogram(0), fPIDResponse(0), fMCEvent(0) //agregamos inicializadores
 {
     // default constructor, don't allocate memory here!
     // this is used by root for IO purposes, it needs to remain empty
 }
 //_____________________________________________________________________________
 AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char* name) : AliAnalysisTaskSE(name),
-    fAOD(0), fOutputList(0), fHistPt(0), fHistPtV(0), fHistPt1(0), fHistPt128(0), fHistPt512(0), fYour2DHistogram(0), fPIDResponse(0)
+    fAOD(0), fOutputList(0), fHistPt(0), fHistPtV(0), fHistPt1(0), fHistPt128(0), fHistPt512(0), fYour2DHistogram(0), fPIDResponse(0), fMCEvent(0)  //agregamos inicializadores
 {
     // constructor
     DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
@@ -112,9 +116,29 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects()
     PostData(1, fOutputList);
     
 }
+
+//_____________________________________________________________________________
+void AliAnalysisTaskMyTask::ProcessMCParticles()		//hacemos uso de la nueva funcion para MC
+{
+    // process MC particles
+    TClonesArray* AODMCTrackArray = dynamic_cast<TClonesArray*>(fInputEvent->FindListObject(AliAODMCParticle::StdBranchName()));
+    if (AODMCTrackArray == NULL) return;
+
+    // Loop over all primary MC particle
+    for(Long_t i = 0; i < AODMCTrackArray->GetEntriesFast(); i++) {
+
+      AliAODMCParticle* particle = static_cast<AliAODMCParticle*>(AODMCTrackArray->At(i));
+      if (!particle) continue;
+      cout << "PDG CODE = " << particle->GetPdgCode() << endl;
+    }
+}
+
 //_____________________________________________________________________________
 void AliAnalysisTaskMyTask::UserExec(Option_t *)
 {
+
+fMCEvent = MCEvent();		//sacamos informacion de los MC
+if(fMCEvent) ProcessMCParticles(); 	//y la procesamos
  
  
     // user exec
@@ -190,21 +214,21 @@ void AliAnalysisTaskMyTask::UserExec(Option_t *)
     	AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(q));
     	if(!track || !track->TestFilterBit(1)) continue;
     	fYour2DHistogram->Fill(track->P(), track->GetTPCsignal());
-    double kaonSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
+    double kaonSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);		//identificacion de particulas
     double pionSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
     double protonSignal = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
     if (std::abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion)) < 3 ) {
    //jippy, i'm a pion
     };
     Float_t centrality(0);
-    AliMultSelection *multSelection =static_cast<AliMultSelection*>(fAOD->FindListObject("MultSelection"));
+    AliMultSelection *multSelection =static_cast<AliMultSelection*>(fAOD->FindListObject("MultSelection"));	//centralidad
     if(multSelection) centrality = multSelection->GetMultiplicityPercentile("V0M");
     PostData(1, fOutputList);
     };
 
 AliAnalysisManager *man = AliAnalysisManager::GetAnalysisManager();
     if (man) {
-    	AliInputEventHandler* inputHandler = (AliInputEventHandler*)(man->GetInputEventHandler());
+    	AliInputEventHandler* inputHandler = (AliInputEventHandler*)(man->GetInputEventHandler());		//pid response
     	if (inputHandler)   fPIDResponse = inputHandler->GetPIDResponse();
     }
 
